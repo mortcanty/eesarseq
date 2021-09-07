@@ -369,7 +369,7 @@ row2 = widgets.HBox([w_collect,w_significance,w_stride,w_export,w_review])
 row3 = widgets.HBox([w_preview,w_change,w_masks,w_qm])
 row4 = widgets.HBox([w_reset,w_out])
 
-box = widgets.VBox([row0,row1,row2,row3])
+box = widgets.VBox([row0,row1,row2,row3,row4])
 
 
 
