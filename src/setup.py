@@ -9,6 +9,6 @@ setup(name = 'eesar',
 			   long_description = 'Widget application for sequentialSAR change detection on Colab',
 			   license = 'GNU General Public License',
 			   platforms = ['Google Colab'],
-			   packages = ['src/eesar'])
+			   packages = ['eesar'])
             
 
