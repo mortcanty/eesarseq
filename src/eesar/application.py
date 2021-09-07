@@ -306,7 +306,7 @@ w_maskwater = widgets.Checkbox(
     disabled=False
 )
 w_out = widgets.Output(
-    layout={'border': '1px solid black'}
+    layout=widgets.Layout(border='1px solid black')
 )
 
 w_collect = widgets.Button(description="Collect",disabled=True)
