@@ -435,8 +435,7 @@ def on_collect_button_clicked(b):
         try:
             w_out.clear_output()
             print('running on GEE archive COPERNICUS/S1_GRD (please wait for raster overlay) ...')
-            collection = getS1collection()          
-            archive_crs = ee.Image(collection.first()).select(0).projection().crs().getInfo()    
+            collection = getS1collection()             
             if w_relativeorbitnumber.value > 0:
                 collection = collection.filter(ee.Filter.eq('relativeOrbitNumber_start', int(w_relativeorbitnumber.value)))   
             if w_platform.value != 'Both':
@@ -446,6 +445,7 @@ def on_collect_button_clicked(b):
             count = len(acquisition_times)      
             if count<2:
                 raise ValueError('Less than 2 images found')
+            archive_crs = ee.Image(collection.first()).select(0).projection().crs().getInfo() 
             timestamplist = []
             for timestamp in acquisition_times:
                 tmp = time.gmtime(int(timestamp)/1000)
