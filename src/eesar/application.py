@@ -204,7 +204,7 @@ w_location = widgets.Text(
     disabled=False
 )
 w_orbitpass = widgets.RadioButtons(
-    layout = widgets.Layout(width='30%'),
+    layout = widgets.Layout(width='20%'),
     options=['ASCENDING','DESCENDING'],
     value='ASCENDING',
     description='Pass:',
@@ -230,7 +230,7 @@ w_platform = widgets.RadioButtons(
     disabled=False
 )
 w_relativeorbitnumber = widgets.IntText(
-    layout = widgets.Layout(width='150px'),
+    layout = widgets.Layout(width='20%'),
     value='0',
     description='Rel orbit:',
     disabled=False
@@ -255,14 +255,12 @@ w_exportscale = widgets.FloatText(
     disabled=False
 )
 w_startdate = widgets.Text(
-    layout = widgets.Layout(width='200px'),
     value='2018-04-01',
     placeholder=' ',
     description='Start date:',
     disabled=False
 )
 w_enddate = widgets.Text(
-    layout = widgets.Layout(width='200px'),
     value='2018-11-01',
     placeholder=' ',
     description='End date:',
@@ -319,7 +317,7 @@ w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater])
 w_qm = widgets.VBox([w_quick,w_median])
-w_dates = widgets.VBox([w_startdate,w_enddate])
+w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='20%'))
 w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='150px'),)
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 
@@ -370,8 +368,6 @@ row3 = widgets.HBox([w_preview,w_change,w_masks,w_qm])
 row4 = widgets.HBox([w_reset,w_out])
 
 box = widgets.VBox([row0,row1,row2,row3,row4])
-
-
 
 #@title Collect
 
