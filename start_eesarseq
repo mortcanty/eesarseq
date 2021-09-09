@@ -1,5 +1,5 @@
 source /home/mort/venv38/bin/activate
-cd ~/python/eesarseq
+cd ~/python/EESarseq/src
 python setup.py install
 cd src
 jupyter notebook --no-browser --ip=0.0.0.0 --allow-root --NotebookApp.token=''
