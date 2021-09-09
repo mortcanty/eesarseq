@@ -16,7 +16,7 @@ from ipyleaflet import (Map,DrawControl,TileLayer,
 from geopy.geocoders import Nominatim
 
 # *****************************************
-# The sequeental change detection algorithm
+# The sequental change detection algorithm
 # *****************************************
 
 def chi2cdf(chi2, df):
@@ -193,18 +193,16 @@ def change_maps(im_list, median=False, alpha=0.01):
 # The widget interface
 # ********************
 
-poly = ee.Geometry.MultiPolygon([])
+poly = None
 geolocator = Nominatim(timeout=10,user_agent='tutorial-pt-4.ipynb')
 
 w_location = widgets.Text(
-    layout = widgets.Layout(width='15%'),
     value='Jülich',
     placeholder=' ',
     description='',
     disabled=False
 )
 w_orbitpass = widgets.RadioButtons(
-    layout = widgets.Layout(width='20%'),
     options=['ASCENDING','DESCENDING'],
     value='ASCENDING',
     description='Pass:',
@@ -223,14 +221,12 @@ w_bmap = widgets.BoundedIntText(
     disabled=True
 )
 w_platform = widgets.RadioButtons(
-    layout = widgets.Layout(width='20%'),
     options=['Both','A','B'],
      value='Both',
     description='Platform:',
     disabled=False
 )
 w_relativeorbitnumber = widgets.IntText(
-    layout = widgets.Layout(width='20%'),
     value='0',
     description='Rel orbit:',
     disabled=False
@@ -361,13 +357,12 @@ w_median.observe(on_widget_change,names='value')
 w_significance.observe(on_widget_change,names='value')
 w_changemap.observe(on_changemap_widget_change,names='value')  
 
-row0 = widgets.HBox([w_goto,w_location])
-row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates])
+row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates,w_goto,w_location])
 row2 = widgets.HBox([w_collect,w_significance,w_stride,w_export,w_review])
 row3 = widgets.HBox([w_preview,w_change,w_masks,w_qm])
 row4 = widgets.HBox([w_reset,w_out])
 
-box = widgets.VBox([row0,row1,row2,row3,row4])
+box = widgets.VBox([row1,row2,row3,row4])
 
 #@title Collect
 
@@ -394,15 +389,14 @@ def handle_draw(self, action, geo_json):
     global poly
     coords =  geo_json['geometry']['coordinates']
     if action == 'created':
-        poly = ee.Geometry.MultiPolygon(poly.coordinates().add(coords))
+        poly = ee.Geometry.Polygon(coords)
         w_preview.disabled = True
         w_export_ass.disabled = True
         w_collect.disabled = False
     elif action == 'deleted':
-        poly1 = ee.Geometry.MultiPolygon(coords)
-        poly = poly.difference(poly1)
-        if len(poly.coordinates().getInfo()) == 0:
-           w_collect.disabled = True            
+        poly = None
+        w_collect.disabled = True  
+        w_preview.disabled = True          
 
 def getS1collection():
     s1 =  ee.ImageCollection('COPERNICUS/S1_GRD') \
@@ -568,7 +562,7 @@ def run():
  
     m = Map(center=center, 
                     zoom=11, 
-                    layout={'height':'500px','width':'900px'},
+                    layout={'height':'600px','width':'1000px'},
                     layers=(ewi,ews,osm),
                     controls=(dc,lc,fs))
     with w_out:
