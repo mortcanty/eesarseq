@@ -312,10 +312,10 @@ w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater])
-w_qm = widgets.VBox([w_quick,w_median])
 w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='20%'))
 w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='150px'),)
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
+w_signif = widgets.VBox([w_significance,w_median])
 
 def on_widget_change(b):
     w_preview.disabled = True
@@ -358,8 +358,8 @@ w_significance.observe(on_widget_change,names='value')
 w_changemap.observe(on_changemap_widget_change,names='value')  
 
 row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates,w_goto,w_location])
-row2 = widgets.HBox([w_collect,w_significance,w_stride,w_export,w_review])
-row3 = widgets.HBox([w_preview,w_change,w_masks,w_qm])
+row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review])
+row3 = widgets.HBox([w_preview,w_change,w_masks,w_quick])
 row4 = widgets.HBox([w_reset,w_out])
 
 box = widgets.VBox([row1,row2,row3,row4])
@@ -396,7 +396,9 @@ def handle_draw(self, action, geo_json):
     elif action == 'deleted':
         poly = None
         w_collect.disabled = True  
-        w_preview.disabled = True          
+        w_preview.disabled = True    
+        w_export_ass.disabled = True
+        w_export_drv.disabled = True      
 
 def getS1collection():
     s1 =  ee.ImageCollection('COPERNICUS/S1_GRD') \
@@ -495,6 +497,7 @@ w_collect.on_click(on_collect_button_clicked)
 watermask = ee.Image('UMD/hansen/global_forest_change_2015').select('datamask').eq(1)  
 
 def on_preview_button_clicked(b):
+    global smap,cmap,fmap,bmap
     with w_out:  
         try:       
             jet = 'black,blue,cyan,yellow,red'
@@ -542,6 +545,100 @@ def on_preview_button_clicked(b):
             print('Error: %s'%e)
 
 w_preview.on_click(on_preview_button_clicked)      
+
+def on_review_button_clicked(b):
+    with w_out:  
+        try: 
+#          test for existence of asset                  
+            tst = ee.Image(w_exportassetsname.value).getInfo()
+#          ---------------------------            
+            asset = ee.Image(w_exportassetsname.value)
+            poly = ee.Geometry.Polygon(ee.Geometry(asset.get('system:footprint')).coordinates())
+            center = poly.centroid().coordinates().getInfo()
+            center.reverse()
+            m.center = center  
+            bnames = asset.bandNames().getInfo()[3:-2]
+            count = len(bnames)               
+            jet = 'black,blue,cyan,yellow,red'
+            rcy = 'black,red,cyan,yellow'
+            smap = asset.select('smap').byte()
+            cmap = asset.select('cmap').byte()
+            fmap = asset.select('fmap').byte()
+            bmap = asset.select(list(range(3,count+3)),bnames).byte()      
+            palette = jet
+            w_out.clear_output()
+            print('Series length: %i images, reviewing (please wait for raster overlay) ...'%(count+1))
+            if w_changemap.value=='First':
+                mp = smap
+                mx = count
+                print('Interval of first change:\n blue = early, red = late')
+            elif w_changemap.value=='Last':
+                mp = cmap
+                mx = count
+                print('Interval of last change:\n blue = early, red = late')
+            elif w_changemap.value=='Frequency':
+                mp = fmap
+                mx = count/2
+                print('Change frequency :\n blue = few, red = many')
+            else:
+                sel = int(w_bmap.value)-1
+                sel = min(sel,count-1)
+                sel = max(sel,0)
+                if sel>0:
+                    print('Bitemporal: %s --> %s'%(bnames[sel-1],bnames[sel]))
+                else:
+                    print('Bitemporal: image1 --> %s'%bnames[sel])
+                print('red = positive definite, cyan = negative definite, yellow = indefinite')     
+                mp = bmap.select(sel)
+                palette = rcy
+                mx = 3     
+            if len(m.layers)>3:
+                m.remove_layer(m.layers[3])
+            if w_maskwater.value==True:
+                mp = mp.updateMask(watermask)
+            if w_maskchange.value==True:    
+                mp = mp.updateMask(mp.gt(0))    
+            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, palette=palette))))
+            w_collect.disabled = False
+        except Exception as e:
+            print('Error: %s'%e)
+    
+w_review.on_click(on_review_button_clicked)   
+
+def on_export_ass_button_clicked(b):
+    try:
+        cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
+        assexport = ee.batch.Export.image.toAsset(cmaps.byte().clip(poly),
+                                    description='assetExportTask', 
+                                    assetId=w_exportassetsname.value,scale=10,maxPixels=1e9)      
+        assexport.start()
+        with w_out: 
+            w_out.clear_output() 
+            print('Exporting change maps to %s\n task id: %s'%(w_exportassetsname.value,str(assexport.id)))
+    except Exception as e:
+        with w_out:
+            print('Error: %s'%e)                                          
+    
+w_export_ass.on_click(on_export_ass_button_clicked)  
+
+def on_export_drv_button_clicked(b):
+    try:
+        cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
+        fileNamePrefix=w_exportdrivename.value.replace('/','-')            
+        gdexport = ee.batch.Export.image.toDrive(cmaps.byte().clip(poly),
+                                    description='driveExportTask', 
+                                    folder = 'gee',
+                                    fileNamePrefix=fileNamePrefix,scale=10,maxPixels=1e9)   
+        gdexport.start()
+        with w_out:
+            w_out.clear_output()
+            print('Exporting change maps to Drive/gee/%s\n task id: %s'%(fileNamePrefix,str(gdexport.id))) 
+    except Exception as e:
+        with w_out:
+            print('Error: %s'%e) 
+
+w_export_drv.on_click(on_export_drv_button_clicked)            
+
 
 #@title Run the interface
 def run():
