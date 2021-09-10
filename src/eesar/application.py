@@ -10,9 +10,7 @@ import ipywidgets as widgets
 from IPython.display import display
 from ipyleaflet import (Map,DrawControl,TileLayer,
                         basemaps,basemap_to_tiles,
-                        LayersControl,
-                        MeasureControl,
-                        FullScreenControl)
+                        LayersControl)
 from geopy.geocoders import Nominatim
 
 # *****************************************
@@ -227,6 +225,7 @@ w_platform = widgets.RadioButtons(
     disabled=False
 )
 w_relativeorbitnumber = widgets.IntText(
+    layout = widgets.Layout(width='150px'),
     value='0',
     description='Rel orbit:',
     disabled=False
@@ -312,7 +311,7 @@ w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater])
-w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='20%'))
+w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='30%'))
 w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='150px'),)
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 w_signif = widgets.VBox([w_significance,w_median])
@@ -392,6 +391,7 @@ def handle_draw(self, action, geo_json):
         poly = ee.Geometry.Polygon(coords)
         w_preview.disabled = True
         w_export_ass.disabled = True
+        w_export_drv.disabled = True 
         w_collect.disabled = False
     elif action == 'deleted':
         poly = None
@@ -655,13 +655,12 @@ def run():
     dc.on_draw(handle_draw)
     
     lc = LayersControl(position='topright')
-    fs = FullScreenControl(position='topleft')
  
     m = Map(center=center, 
                     zoom=11, 
                     layout={'height':'600px','width':'1000px'},
                     layers=(ewi,ews,osm),
-                    controls=(dc,lc,fs))
+                    controls=(dc,lc))
     with w_out:
         w_out.clear_output()
         print('Algorithm output') 
