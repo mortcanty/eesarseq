@@ -1,4 +1,6 @@
-#@title Algorithm (from Part 3)
+# application.py
+# widget interface SAR for sequential change detection
+# colab version
 
 import ee
 ee.Initialize
@@ -10,9 +12,7 @@ import ipywidgets as widgets
 from IPython.display import display
 from ipyleaflet import (Map,DrawControl,TileLayer,
                         basemaps,basemap_to_tiles,
-                        LayersControl,
-                        MeasureControl,
-                        FullScreenControl)
+                        LayersControl)
 from geopy.geocoders import Nominatim
 
 # *****************************************
@@ -197,6 +197,7 @@ poly = None
 geolocator = Nominatim(timeout=10,user_agent='tutorial-pt-4.ipynb')
 
 w_location = widgets.Text(
+    layout = widgets.Layout(width='150px'),
     value='Jülich',
     placeholder=' ',
     description='',
@@ -227,6 +228,7 @@ w_platform = widgets.RadioButtons(
     disabled=False
 )
 w_relativeorbitnumber = widgets.IntText(
+    layout = widgets.Layout(width='150px'),
     value='0',
     description='Rel orbit:',
     disabled=False
@@ -239,7 +241,7 @@ w_exportassetsname = widgets.Text(
 )
 w_exportdrivename = widgets.Text(
     layout = widgets.Layout(width='200px'),
-    value='gee/<path>',
+    value='<path>',
     placeholder=' ',
     disabled=False
 )
@@ -271,7 +273,7 @@ w_stride = widgets.BoundedIntText(
 )
 w_median = widgets.Checkbox(
     value=True,
-    description='3x3 Median filter',
+    description='5x5 Median filter',
     disabled=False
 )
 w_quick = widgets.Checkbox(
@@ -312,7 +314,7 @@ w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater])
-w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='20%'))
+w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='30%'))
 w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='150px'),)
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 w_signif = widgets.VBox([w_significance,w_median])
@@ -357,10 +359,10 @@ w_median.observe(on_widget_change,names='value')
 w_significance.observe(on_widget_change,names='value')
 w_changemap.observe(on_changemap_widget_change,names='value')  
 
-row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates,w_goto,w_location])
+row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates])
 row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review])
 row3 = widgets.HBox([w_preview,w_change,w_masks,w_quick])
-row4 = widgets.HBox([w_reset,w_out])
+row4 = widgets.HBox([w_reset,w_out,w_goto,w_location])
 
 box = widgets.VBox([row1,row2,row3,row4])
 
@@ -392,6 +394,7 @@ def handle_draw(self, action, geo_json):
         poly = ee.Geometry.Polygon(coords)
         w_preview.disabled = True
         w_export_ass.disabled = True
+        w_export_drv.disabled = True 
         w_collect.disabled = False
     elif action == 'deleted':
         poly = None
@@ -426,6 +429,8 @@ def clipList(current,prev):
     return ee.Dictionary({'imlist':imlist,'poly':poly,'enl':enl,'ctr':ctr.add(1),'stride':stride})    
 
 def on_collect_button_clicked(b):
+    ''' Collect a time series from the archive 
+    '''
     global result, count, timestamplist1, archive_crs
     with w_out:
         try:
@@ -497,6 +502,8 @@ w_collect.on_click(on_collect_button_clicked)
 watermask = ee.Image('UMD/hansen/global_forest_change_2015').select('datamask').eq(1)  
 
 def on_preview_button_clicked(b):
+    ''' Preview change maps
+    '''
     global smap,cmap,fmap,bmap
     with w_out:  
         try:       
@@ -547,6 +554,8 @@ def on_preview_button_clicked(b):
 w_preview.on_click(on_preview_button_clicked)      
 
 def on_review_button_clicked(b):
+    ''' Examine change maps exported to user's assets
+    ''' 
     with w_out:  
         try: 
 #          test for existence of asset                  
@@ -606,6 +615,8 @@ def on_review_button_clicked(b):
 w_review.on_click(on_review_button_clicked)   
 
 def on_export_ass_button_clicked(b):
+    ''' Export to assets
+    '''
     try:
         cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
         assexport = ee.batch.Export.image.toAsset(cmaps.byte().clip(poly),
@@ -622,6 +633,8 @@ def on_export_ass_button_clicked(b):
 w_export_ass.on_click(on_export_ass_button_clicked)  
 
 def on_export_drv_button_clicked(b):
+    ''' Export to Google Drive
+    '''
     try:
         cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
         fileNamePrefix=w_exportdrivename.value.replace('/','-')            
@@ -655,13 +668,12 @@ def run():
     dc.on_draw(handle_draw)
     
     lc = LayersControl(position='topright')
-    fs = FullScreenControl(position='topleft')
  
     m = Map(center=center, 
                     zoom=11, 
                     layout={'height':'600px','width':'1000px'},
                     layers=(ewi,ews,osm),
-                    controls=(dc,lc,fs))
+                    controls=(dc,lc))
     with w_out:
         w_out.clear_output()
         print('Algorithm output') 
