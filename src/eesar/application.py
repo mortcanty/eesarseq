@@ -210,8 +210,7 @@ w_orbitpass = widgets.RadioButtons(
     disabled=False
 )
 w_changemap = widgets.RadioButtons(
-    layout = widgets.Layout(width='250px'),
-    layout = widgets.Layout(height='200px'),
+    layout = widgets.Layout(width='30%'),
     options=['Bitemporal','First','Last','Frequency'],
     value='First',
     disabled=False
