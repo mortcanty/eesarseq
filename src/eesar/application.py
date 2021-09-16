@@ -316,7 +316,7 @@ w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater,w_quick])
 w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='30%'))
-w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='150px'),)
+w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='250px'),)
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 w_signif = widgets.VBox([w_significance,w_median])
 
