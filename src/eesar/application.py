@@ -223,6 +223,7 @@ w_bmap = widgets.BoundedIntText(
 )
 w_platform = widgets.RadioButtons(
     layout = widgets.Layout(width='150px'),
+    layout = widgets.Layout(height='200px'),
     options=['Both','A','B'],
      value='Both',
     description='Platform:',
