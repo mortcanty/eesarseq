@@ -216,7 +216,7 @@ w_changemap = widgets.RadioButtons(
 w_bmap = widgets.BoundedIntText(
     min=1,
     value=1,
-    description='',
+    description='Interval',
     disabled=True
 )
 w_platform = widgets.RadioButtons(
