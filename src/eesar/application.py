@@ -197,7 +197,6 @@ poly = None
 geolocator = Nominatim(timeout=10,user_agent='tutorial-pt-4.ipynb')
 
 w_location = widgets.Text(
-    layout = widgets.Layout(width='150px'),
     value='Jülich',
     placeholder=' ',
     description='',
@@ -227,25 +226,21 @@ w_platform = widgets.RadioButtons(
     disabled=False
 )
 w_relativeorbitnumber = widgets.IntText(
-    layout = widgets.Layout(width='150px'),
     value='0',
     description='Rel orbit:',
     disabled=False
 )
 w_exportassetsname = widgets.Text(
-    layout = widgets.Layout(width='250px'),
     value='projects/<username>/assets/<path>',
     placeholder=' ',
     disabled=False
 )
 w_exportdrivename = widgets.Text(
-    layout = widgets.Layout(width='200px'),
     value='<path>',
     placeholder=' ',
     disabled=False
 )
 w_exportscale = widgets.FloatText(
-    layout = widgets.Layout(width='150px'),
     value=10,
     placeholder=' ',
     description='Scale ',
@@ -264,7 +259,6 @@ w_enddate = widgets.Text(
     disabled=False
 )
 w_stride = widgets.BoundedIntText(
-    layout = widgets.Layout(width='200px'),
     value=1,
     min=1,
     description='Stride:',
@@ -276,13 +270,11 @@ w_median = widgets.Checkbox(
     disabled=False
 )
 w_quick = widgets.Checkbox(
-    layout = widgets.Layout(width='250px'),
     value=True,
     description='Quick Preview',
     disabled=False
 )
 w_significance = widgets.BoundedFloatText(
-    layout = widgets.Layout(width='200px'),
     value='0.01',
     min=0.001,
     max=0.05,
@@ -313,8 +305,8 @@ w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater,w_quick])
-w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='30%'))
-w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='300px'),)
+w_dates = widgets.VBox([w_startdate,w_enddate])
+w_change = widgets.HBox([w_changemap,w_bmap])
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 w_signif = widgets.VBox([w_significance,w_median])
 
