@@ -313,7 +313,7 @@ w_goto = widgets.Button(description='GoTo',disabled=False)
 w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
 
-w_masks = widgets.VBox([w_maskchange,w_maskwater])
+w_masks = widgets.VBox([w_maskchange,w_maskwater,w_quick])
 w_dates = widgets.VBox([w_startdate,w_enddate],layout = widgets.Layout(width='30%'))
 w_change = widgets.HBox([w_changemap,w_bmap],layout = widgets.Layout(width='150px'),)
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
@@ -361,7 +361,7 @@ w_changemap.observe(on_changemap_widget_change,names='value')
 
 row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates])
 row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review])
-row3 = widgets.HBox([w_preview,w_change,w_masks,w_quick])
+row3 = widgets.HBox([w_preview,w_change,w_masks])
 row4 = widgets.HBox([w_reset,w_out,w_goto,w_location])
 
 box = widgets.VBox([row1,row2,row3,row4])
@@ -559,7 +559,7 @@ def on_review_button_clicked(b):
     with w_out:  
         try: 
 #          test for existence of asset                  
-            tst = ee.Image(w_exportassetsname.value).getInfo()
+            _ = ee.Image(w_exportassetsname.value).getInfo()
 #          ---------------------------            
             asset = ee.Image(w_exportassetsname.value)
             poly = ee.Geometry.Polygon(ee.Geometry(asset.get('system:footprint')).coordinates())
