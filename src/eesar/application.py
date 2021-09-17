@@ -350,10 +350,10 @@ w_median.observe(on_widget_change,names='value')
 w_significance.observe(on_widget_change,names='value')
 w_changemap.observe(on_changemap_widget_change,names='value')  
 
-row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates])
-row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review])
-row3 = widgets.HBox([w_preview,w_change,w_masks])
-row4 = widgets.HBox([w_reset,w_out,w_goto,w_location])
+row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates],layout=widgets.Layout(border='1px solid black'))
+row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review],layout=widgets.Layout(border='1px solid black'))
+row3 = widgets.HBox([w_preview,w_change,w_masks],layout=widgets.Layout(border='1px solid black'))
+row4 = widgets.HBox([w_reset,w_out,w_goto,w_location],layout=widgets.Layout(border='1px solid black'))
 
 box = widgets.VBox([row1,row2,row3,row4])
 
