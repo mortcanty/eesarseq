@@ -292,6 +292,14 @@ w_maskwater = widgets.Checkbox(
     description='Water mask',
     disabled=False
 )
+w_opacity = widgets.BoundedFloatText(
+    value='1.0',
+    min=0.0,
+    max=1.0,
+    step=0.1,
+    description='Opacity:',
+    disabled=False
+)
 w_out = widgets.Output(
     layout=widgets.Layout(border='1px solid black')
 )
@@ -352,7 +360,7 @@ w_changemap.observe(on_changemap_widget_change,names='value')
 
 row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates],layout=widgets.Layout(border='1px solid black'))
 row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review],layout=widgets.Layout(border='1px solid black'))
-row3 = widgets.HBox([w_preview,w_change,w_masks],layout=widgets.Layout(border='1px solid black'))
+row3 = widgets.HBox([w_preview,w_change,w_masks,w_opacity],layout=widgets.Layout(border='1px solid black'))
 row4 = widgets.HBox([w_reset,w_out,w_goto,w_location],layout=widgets.Layout(border='1px solid black'))
 
 box = widgets.VBox([row1,row2,row3,row4])
@@ -474,7 +482,7 @@ def on_collect_button_clicked(b):
             percentiles = collectionmosaic.reduceRegion(ee.Reducer.percentile([2,98]),geometry=poly,scale=w_exportscale.value,maxPixels=10e9)
             mn = ee.Number(percentiles.get('b0_p2'))
             mx = ee.Number(percentiles.get('b0_p98'))        
-            vorschau = collectionmosaic.select(0).visualize(min=mn, max=mx) 
+            vorschau = collectionmosaic.select(0).visualize(min=mn, max=mx, opacity=w_opacity.value) 
             #Run the algorithm ************************************************
             result = change_maps(imList, w_median.value, w_significance.value)
             #******************************************************************
@@ -536,7 +544,7 @@ def on_preview_button_clicked(b):
                 mp = mp.updateMask(watermask)
             if w_maskchange.value==True:    
                 mp = mp.updateMask(mp.gt(0))    
-            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, palette=palette))))
+            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, opacity=w_opacity.value, palette=palette))))
             w_export_ass.disabled = False
             w_export_drv.disabled = False
         except Exception as e:
@@ -598,7 +606,7 @@ def on_review_button_clicked(b):
                 mp = mp.updateMask(watermask)
             if w_maskchange.value==True:    
                 mp = mp.updateMask(mp.gt(0))    
-            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, palette=palette))))
+            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, opacity=w_opacity.value, palette=palette))))
             w_collect.disabled = False
         except Exception as e:
             print('Error: %s'%e)
