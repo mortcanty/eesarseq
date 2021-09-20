@@ -660,7 +660,6 @@ w_export_drv.on_click(on_export_drv_button_clicked)
 def on_plot_button_clicked(b):          
 #  plot change fractions        
     global bmap1 
-    watermask = ee.Image('UMD/hansen/global_forest_change_2015').select('datamask').eq(1) 
     def plot_iter(current,prev):
         current = ee.Image.constant(current)
         plots = ee.List(prev) 
@@ -674,7 +673,9 @@ def on_plot_button_clicked(b):
             print('Change fraction plots ...')                  
             assetImage = ee.Image(w_exportassetsname.value)
             k = assetImage.bandNames().length().subtract(4).getInfo()            
-            bmap1 = assetImage.select(ee.List.sequence(3,k+2)).updateMask(watermask)             
+            bmap1 = assetImage.select(ee.List.sequence(3,k+2))            
+            if w_maskwater.value:
+                bmap1 = bmap1.updateMask(watermask) 
             plots = ee.List(ee.List([1,2,3]).iterate(plot_iter,ee.List([]))).getInfo()           
             bns = np.array(list([s[3:9] for s in list(plots[0].keys())])) 
             x = range(1,k+1)  
