@@ -213,10 +213,16 @@ w_changemap = widgets.RadioButtons(
     value='First',
     disabled=False
 )
-w_bmap = widgets.BoundedIntText(
+w_interval = widgets.BoundedIntText(
     min=1,
     value=1,
     description='Interval:',
+    disabled=True
+)
+w_maxfreq = widgets.BoundedIntText(
+    min=1,
+    value=20,
+    description='MaxFrequency:',
     disabled=True
 )
 w_platform = widgets.RadioButtons(
@@ -316,7 +322,7 @@ w_plot = widgets.Button(description='PlotFromAsset',disabled=False)
 w_masks = widgets.VBox([w_maskchange,w_maskwater,w_quick])
 w_dates = widgets.VBox([w_startdate,w_enddate])
 w_assets = widgets.VBox([w_review,w_plot])
-w_change = widgets.HBox([w_changemap,w_bmap])
+w_bmap = widgets.VBox([w_interval,w_maxfreq])
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 w_signif = widgets.VBox([w_significance,w_median])
 
@@ -327,9 +333,13 @@ def on_widget_change(b):
 
 def on_changemap_widget_change(b):   
     if b['new']=='Bitemporal':
-        w_bmap.disabled=False
+        w_interval.disabled=False
     else:
-        w_bmap.disabled=True    
+        w_interval.disabled=True    
+    if b['new']=='Frequency':
+        w_maxfreq.disabled=False
+    else:
+        w_maxfreq.disabled=True    
 
 def on_reset_button_clicked(b):
     with w_out:
@@ -362,7 +372,7 @@ w_changemap.observe(on_changemap_widget_change,names='value')
 
 row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates],layout=widgets.Layout(border='1px solid black'))
 row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_assets],layout=widgets.Layout(border='1px solid black'))
-row3 = widgets.HBox([w_preview,w_change,w_masks,w_opacity],layout=widgets.Layout(border='1px solid black'))
+row3 = widgets.HBox([w_preview,w_changemap,w_bmap,w_masks,w_opacity],layout=widgets.Layout(border='1px solid black'))
 row4 = widgets.HBox([w_reset,w_out,w_goto,w_location],layout=widgets.Layout(border='1px solid black'))
 
 box = widgets.VBox([row1,row2,row3,row4])
@@ -524,10 +534,10 @@ def on_preview_button_clicked(b):
                 print('Interval of last change:\n blue = early, red = late')
             elif w_changemap.value=='Frequency':
                 mp = ee.Image(result.get('fmap')).byte()
-                mx = count/2
+                mx = w_maxfreq.value
                 print('Change frequency :\n blue = few, red = many')
             else:
-                sel = int(w_bmap.value)
+                sel = int(w_interval.value)
                 sel = min(sel,count-1)
                 sel = max(sel,1)
                 print('Bitemporal: %s-->%s'%(timestamplist1[sel-1],timestamplist1[sel]))
@@ -584,10 +594,10 @@ def on_review_button_clicked(b):
                 print('Interval of last change:\n blue = early, red = late')
             elif w_changemap.value=='Frequency':
                 mp = fmap
-                mx = count/2
+                mx = w_maxfreq.value
                 print('Change frequency :\n blue = few, red = many')
             else:
-                sel = int(w_bmap.value)-1
+                sel = int(w_interval.value)-1
                 sel = min(sel,count-1)
                 sel = max(sel,0)
                 if sel>0:
