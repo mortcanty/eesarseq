@@ -307,13 +307,15 @@ w_out = widgets.Output(
 w_collect = widgets.Button(description="Collect",disabled=True)
 w_preview = widgets.Button(description="Preview",disabled=True)
 w_review = widgets.Button(description="ReviewAsset",disabled=False)
-w_reset = widgets.Button(description='Reset',disabled=False)
+w_reset = widgets.Button(description='Clear',disabled=False)
 w_goto = widgets.Button(description='GoTo',disabled=False)
 w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
+w_plot = widgets.Button(description='PlotFromAsset',disabled=False)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater,w_quick])
 w_dates = widgets.VBox([w_startdate,w_enddate])
+w_assets = widgets.VBox([w_review,w_plot])
 w_change = widgets.HBox([w_changemap,w_bmap])
 w_export = widgets.VBox([widgets.HBox([w_export_ass,w_exportassetsname]),widgets.HBox([w_export_drv,w_exportdrivename])])
 w_signif = widgets.VBox([w_significance,w_median])
@@ -359,7 +361,7 @@ w_significance.observe(on_widget_change,names='value')
 w_changemap.observe(on_changemap_widget_change,names='value')  
 
 row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates],layout=widgets.Layout(border='1px solid black'))
-row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_review],layout=widgets.Layout(border='1px solid black'))
+row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_assets],layout=widgets.Layout(border='1px solid black'))
 row3 = widgets.HBox([w_preview,w_change,w_masks,w_opacity],layout=widgets.Layout(border='1px solid black'))
 row4 = widgets.HBox([w_reset,w_out,w_goto,w_location],layout=widgets.Layout(border='1px solid black'))
 
@@ -487,6 +489,8 @@ def on_collect_button_clicked(b):
             result = change_maps(imList, w_median.value, w_significance.value)
             #******************************************************************
             w_preview.disabled = False
+            w_export_ass.disabled = False
+            w_export_drv.disabled = False
             #Display preview 
             if len(m.layers)>3:
                 m.remove_layer(m.layers[3])
@@ -503,28 +507,23 @@ watermask = ee.Image('UMD/hansen/global_forest_change_2015').select('datamask').
 def on_preview_button_clicked(b):
     ''' Preview change maps
     '''
-    global smap,cmap,fmap,bmap
     with w_out:  
         try:       
             jet = 'black,blue,cyan,yellow,red'
             rcy = 'black,red,cyan,yellow'
-            smap = ee.Image(result.get('smap')).byte()
-            cmap = ee.Image(result.get('cmap')).byte()
-            fmap = ee.Image(result.get('fmap')).byte() 
-            bmap = ee.Image(result.get('bmap')).byte()              
             palette = jet
             w_out.clear_output()
             print('Series length: %i images, previewing (please wait for raster overlay) ...'%count)
             if w_changemap.value=='First':
-                mp = smap
+                mp = ee.Image(result.get('smap')).byte()
                 mx = count
                 print('Interval of first change:\n blue = early, red = late')
             elif w_changemap.value=='Last':
-                mp=cmap
+                mp=ee.Image(result.get('cmap')).byte()
                 mx = count
                 print('Interval of last change:\n blue = early, red = late')
             elif w_changemap.value=='Frequency':
-                mp = fmap
+                mp = ee.Image(result.get('fmap')).byte()
                 mx = count/2
                 print('Change frequency :\n blue = few, red = many')
             else:
@@ -532,7 +531,8 @@ def on_preview_button_clicked(b):
                 sel = min(sel,count-1)
                 sel = max(sel,1)
                 print('Bitemporal: %s-->%s'%(timestamplist1[sel-1],timestamplist1[sel]))
-                print('red = positive definite, cyan = negative definite, yellow = indefinite')     
+                print('red = positive definite, cyan = negative definite, yellow = indefinite')  
+                bmap = ee.Image(result.get('bmap')).byte()   
                 mp = bmap.select(sel-1).clip(poly)
                 palette = rcy
                 mx = 3     
@@ -545,8 +545,6 @@ def on_preview_button_clicked(b):
             if w_maskchange.value==True:    
                 mp = mp.updateMask(mp.gt(0))    
             m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, opacity=w_opacity.value, palette=palette))))
-            w_export_ass.disabled = False
-            w_export_drv.disabled = False
         except Exception as e:
             print('Error: %s'%e)
 
@@ -617,6 +615,10 @@ def on_export_ass_button_clicked(b):
     ''' Export to assets
     '''
     try:
+        smap = ee.Image(result.get('smap')).byte()
+        cmap = ee.Image(result.get('cmap')).byte()
+        fmap = ee.Image(result.get('fmap')).byte() 
+        bmap = ee.Image(result.get('bmap')).byte()                    
         cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
         assexport = ee.batch.Export.image.toAsset(cmaps.byte().clip(poly),
                                     description='assetExportTask', 
@@ -635,6 +637,10 @@ def on_export_drv_button_clicked(b):
     ''' Export to Google Drive
     '''
     try:
+        smap = ee.Image(result.get('smap')).byte()
+        cmap = ee.Image(result.get('cmap')).byte()
+        fmap = ee.Image(result.get('fmap')).byte() 
+        bmap = ee.Image(result.get('bmap')).byte()            
         cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
         fileNamePrefix=w_exportdrivename.value.replace('/','-')            
         gdexport = ee.batch.Export.image.toDrive(cmaps.byte().clip(poly),
@@ -650,6 +656,51 @@ def on_export_drv_button_clicked(b):
             print('Error: %s'%e) 
 
 w_export_drv.on_click(on_export_drv_button_clicked)            
+
+def on_plot_button_clicked(b):          
+#  plot change fractions        
+    global bmap1 
+    watermask = ee.Image('UMD/hansen/global_forest_change_2015').select('datamask').eq(1) 
+    def plot_iter(current,prev):
+        current = ee.Image.constant(current)
+        plots = ee.List(prev) 
+        res = bmap1.multiply(0) \
+                  .where(bmap1.eq(current),1) \
+                  .reduceRegion(ee.Reducer.mean(),scale=10,maxPixels=10e10)
+        return ee.List(plots.add(res))
+    with w_out:
+        try:
+            w_out.clear_output()            
+            print('Change fraction plots ...')                  
+            assetImage = ee.Image(w_exportassetsname.value)
+            k = assetImage.bandNames().length().subtract(4).getInfo()            
+            bmap1 = assetImage.select(ee.List.sequence(3,k+2)).updateMask(watermask)             
+            plots = ee.List(ee.List([1,2,3]).iterate(plot_iter,ee.List([]))).getInfo()           
+            bns = np.array(list([s[3:9] for s in list(plots[0].keys())])) 
+            x = range(1,k+1)  
+            _ = plt.figure(figsize=(10,5))
+            plt.plot(x,list(plots[0].values()),'ro-',label='posdef')
+            plt.plot(x,list(plots[1].values()),'co-',label='negdef')
+            plt.plot(x,list(plots[2].values()),'yo-',label='indef')        
+            ticks = range(0,k+2)
+            labels = [str(i) for i in range(0,k+2)]
+            labels[0] = ' '
+            labels[-1] = ' '
+            labels[1:-1] = bns 
+            if k>50:
+                for i in range(1,k+1,2):
+                    labels[i] = ''
+            plt.xticks(ticks,labels,rotation=90)
+            plt.legend()
+            fn = w_exportassetsname.value.replace('/','-')+'.png'
+            plt.savefig(fn,bbox_inches='tight') 
+            w_out.clear_output()
+            plt.show()
+            print('Saved to ~/%s'%fn)
+        except Exception as e:
+            print('Error: %s'%e)               
+    
+w_plot.on_click(on_plot_button_clicked)
 
 
 #@title Run the interface
