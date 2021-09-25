@@ -11,6 +11,7 @@ from scipy.stats import norm, gamma, f, chi2
 import ipywidgets as widgets
 from IPython.display import display
 from ipyleaflet import (Map,DrawControl,TileLayer,
+                        MeasureControl,FullScreenControl,
                         basemaps,basemap_to_tiles,
                         LayersControl)
 from geopy.geocoders import Nominatim
@@ -722,6 +723,9 @@ def run():
     ews = basemap_to_tiles(basemaps.Esri.WorldStreetMap)
     ewi = basemap_to_tiles(basemaps.Esri.WorldImagery)
     
+    mc = MeasureControl(position='topright',primary_length_unit = 'kilometers')
+    fs = FullScreenControl(position='topleft')
+    
     dc = DrawControl(polyline={},circlemarker={})
     dc.rectangle = {"shapeOptions": {"fillColor": "#0000ff","color": "#0000ff","fillOpacity": 0.05}}
     dc.polygon = {"shapeOptions": {"fillColor": "#0000ff","color": "#0000ff","fillOpacity": 0.05}}
@@ -734,7 +738,7 @@ def run():
                     zoom=11, 
                     layout={'height':'600px','width':'1000px'},
                     layers=(ewi,ews,osm),
-                    controls=(dc,lc))
+                    controls=(dc,lc,mc,fs))
     with w_out:
         w_out.clear_output()
         print('Algorithm output') 
