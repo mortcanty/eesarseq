@@ -11,7 +11,7 @@ from scipy.stats import norm, gamma, f, chi2
 import ipywidgets as widgets
 from IPython.display import display
 from ipyleaflet import (Map,DrawControl,TileLayer,
-                        MeasureControl,FullScreenControl,
+                        MeasureControl,
                         basemaps,basemap_to_tiles,
                         LayersControl)
 from geopy.geocoders import Nominatim
@@ -299,6 +299,12 @@ w_maskwater = widgets.Checkbox(
     description='Water mask',
     disabled=False
 )
+w_S2 = widgets.Checkbox(
+    layout = widgets.Layout(width='200px'),
+    value=False,
+    description='Show best S2',
+    disabled=False
+)
 w_opacity = widgets.BoundedFloatText(
     value='1.0',
     min=0.0,
@@ -372,7 +378,7 @@ w_significance.observe(on_widget_change,names='value')
 w_changemap.observe(on_changemap_widget_change,names='value')  
 
 row1 = widgets.HBox([w_platform,w_orbitpass,w_relativeorbitnumber,w_dates],layout=widgets.Layout(border='1px solid black'))
-row2 = widgets.HBox([w_collect,w_signif,w_stride,w_export,w_assets],layout=widgets.Layout(border='1px solid black'))
+row2 = widgets.HBox([w_collect,w_signif,w_stride,w_S2,w_export,w_assets],layout=widgets.Layout(border='1px solid black'))
 row3 = widgets.HBox([w_preview,w_changemap,w_bmap,w_masks,w_opacity],layout=widgets.Layout(border='1px solid black'))
 row4 = widgets.HBox([w_reset,w_out,w_goto,w_location],layout=widgets.Layout(border='1px solid black'))
 
@@ -424,6 +430,13 @@ def getS1collection():
                       .filter(ee.Filter.eq('instrumentMode', 'IW')) \
                       .filter(ee.Filter.eq('orbitProperties_pass', w_orbitpass.value))    
     return s1.filter(ee.Filter.contains(rightValue=poly,leftField='.geo'))
+
+def getS2collection():
+    s2 = ee.ImageCollection('COPERNICUS/S2') \
+                      .filterBounds(poly) \
+                      .filterDate(ee.Date(w_startdate.value),ee.Date(w_enddate.value)) \
+                      .sort('CLOUDY_PIXEL_PERCENTAGE',True)
+    return s2.filter(ee.Filter.contains(rightValue=poly,leftField='.geo'))  
 
 def get_vvvh(image):   
     ''' get 'VV' and 'VH' bands from sentinel-1 imageCollection and restore linear signal from db-values '''
@@ -495,7 +508,24 @@ def on_collect_button_clicked(b):
             percentiles = collectionmosaic.reduceRegion(ee.Reducer.percentile([2,98]),geometry=poly,scale=w_exportscale.value,maxPixels=10e9)
             mn = ee.Number(percentiles.get('b0_p2'))
             mx = ee.Number(percentiles.get('b0_p98'))        
-            vorschau = collectionmosaic.select(0).visualize(min=mn, max=mx, opacity=w_opacity.value) 
+            S1 = collectionmosaic.select(0).visualize(min=mn, max=mx, opacity=w_opacity.value) 
+            # Get an S2 image from the the same interval
+            collection2 = getS2collection() 
+            count1 = collection2.size().getInfo()
+            if count1>0:    
+                s2_image =  ee.Image(collection2.first()).select(['B2','B3','B4'])      
+                percentiles = s2_image.reduceRegion(ee.Reducer.percentile([2,98]),scale=w_exportscale.value,maxPixels=10e9)         
+                mn = percentiles.values(['B2_p2','B3_p2','B4_p2'])
+                mx = percentiles.values(['B2_p98','B3_p98','B4_p98'])
+                S2 = s2_image.visualize(min=mn,max=mx,opacity=w_opacity.value)           
+                timestamp = s2_image.get('system:time_start').getInfo() 
+                timestamp = time.gmtime(int(timestamp)/1000)
+                timestamp = time.strftime('%x', timestamp).replace('/','')
+                timestamps2 = '20'+timestamp[4:]+timestamp[0:4]
+                print('Best Sentinel-2 from %s'%timestamps2)
+            else:
+                print('No S2 image found')             
+            
             #Run the algorithm ************************************************
             result = change_maps(imList, w_median.value, w_significance.value)
             #******************************************************************
@@ -505,7 +535,10 @@ def on_collect_button_clicked(b):
             #Display preview 
             if len(m.layers)>3:
                 m.remove_layer(m.layers[3])
-            m.add_layer(TileLayer(url=GetTileLayerUrl(vorschau)))                
+            if w_S2.value and count1>0:
+                m.add_layer(TileLayer(url=GetTileLayerUrl(S2)))
+            else:
+                m.add_layer(TileLayer(url=GetTileLayerUrl(S1)))                
         except Exception as e:
             print('Error: %s'%e) 
 
@@ -724,7 +757,6 @@ def run():
     ewi = basemap_to_tiles(basemaps.Esri.WorldImagery)
     
     mc = MeasureControl(position='topright',primary_length_unit = 'kilometers')
-    fs = FullScreenControl(position='topleft')
     
     dc = DrawControl(polyline={},circlemarker={})
     dc.rectangle = {"shapeOptions": {"fillColor": "#0000ff","color": "#0000ff","fillOpacity": 0.05}}
@@ -738,7 +770,7 @@ def run():
                     zoom=11, 
                     layout={'height':'600px','width':'1000px'},
                     layers=(ewi,ews,osm),
-                    controls=(dc,lc,mc,fs))
+                    controls=(dc,lc,mc))
     with w_out:
         w_out.clear_output()
         print('Algorithm output') 
