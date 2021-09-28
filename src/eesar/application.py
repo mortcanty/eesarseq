@@ -522,7 +522,8 @@ def on_collect_button_clicked(b):
                 timestamp = time.gmtime(int(timestamp)/1000)
                 timestamp = time.strftime('%x', timestamp).replace('/','')
                 timestamps2 = '20'+timestamp[4:]+timestamp[0:4]
-                print('Best Sentinel-2 from %s'%timestamps2)
+                if w_S2.value:
+                    print('Best Sentinel-2 from %s'%timestamps2)
             else:
                 print('No S2 image found')             
             
@@ -768,7 +769,7 @@ def run():
  
     m = Map(center=center, 
                     zoom=11, 
-                    layout={'height':'600px','width':'1000px'},
+                    layout={'height':'600px','width':'1200px'},
                     layers=(ewi,ews,osm),
                     controls=(dc,lc,mc))
     with w_out:
