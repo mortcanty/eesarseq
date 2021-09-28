@@ -513,7 +513,7 @@ def on_collect_button_clicked(b):
             collection2 = getS2collection() 
             count1 = collection2.size().getInfo()
             if count1>0:    
-                s2_image =  ee.Image(collection2.first()).select(['B2','B3','B4'])      
+                s2_image =  ee.Image(collection2.first()).select(['B2','B3','B4']).clip(poly)      
                 percentiles = s2_image.reduceRegion(ee.Reducer.percentile([2,98]),scale=w_exportscale.value,maxPixels=10e9)         
                 mn = percentiles.values(['B2_p2','B3_p2','B4_p2'])
                 mx = percentiles.values(['B2_p98','B3_p98','B4_p98'])
