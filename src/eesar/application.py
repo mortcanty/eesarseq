@@ -504,11 +504,11 @@ def on_collect_button_clicked(b):
             first = ee.Dictionary({'imlist':ee.List([]),'poly':poly,'enl':ee.Number(4.4),'ctr':ee.Number(0),'stride':ee.Number(int(w_stride.value))}) 
             imList = ee.List(ee.Dictionary(pList.iterate(clipList,first)).get('imlist'))              
             #Get a preview as collection mean                                           
-            collectionmosaic = collection.mosaic().select(0,1).rename('b0','b1')
-            percentiles = collectionmosaic.reduceRegion(ee.Reducer.percentile([2,98]),geometry=poly,scale=w_exportscale.value,maxPixels=10e9)
+            collectionfirst = collection.first().select(0,1).rename('b0','b1')
+            percentiles = collectionfirst.reduceRegion(ee.Reducer.percentile([2,98]),geometry=poly,scale=w_exportscale.value,maxPixels=10e9)
             mn = ee.Number(percentiles.get('b0_p2'))
             mx = ee.Number(percentiles.get('b0_p98'))        
-            S1 = collectionmosaic.select(0).visualize(min=mn, max=mx, opacity=w_opacity.value) 
+            S1 = collectionfirst.select(0).visualize(min=mn, max=mx, opacity=w_opacity.value) 
             # Get an S2 image from the the same interval
             collection2 = getS2collection() 
             count1 = collection2.size().getInfo()
@@ -525,7 +525,8 @@ def on_collect_button_clicked(b):
                 if w_S2.value:
                     print('Best Sentinel-2 from %s'%timestamps2)
             else:
-                print('No S2 image found')             
+                if w_S2.value:
+                    print('No S2 image found')             
             
             #Run the algorithm ************************************************
             result = change_maps(imList, w_median.value, w_significance.value)
