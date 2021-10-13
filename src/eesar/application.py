@@ -234,7 +234,7 @@ w_platform = widgets.RadioButtons(
 )
 w_relativeorbitnumber = widgets.IntText(
     value='0',
-    description='Rel orbit:',
+    description='RelOrbit:',
     disabled=False
 )
 w_exportassetsname = widgets.Text(
@@ -256,13 +256,13 @@ w_exportscale = widgets.FloatText(
 w_startdate = widgets.Text(
     value='2018-04-01',
     placeholder=' ',
-    description='Start date:',
+    description='StartDate:',
     disabled=False
 )
 w_enddate = widgets.Text(
     value='2018-11-01',
     placeholder=' ',
-    description='End date:',
+    description='EndDate:',
     disabled=False
 )
 w_stride = widgets.BoundedIntText(
@@ -273,7 +273,7 @@ w_stride = widgets.BoundedIntText(
 )
 w_median = widgets.Checkbox(
     value=True,
-    description='Median filter',
+    description='MedianFilter',
     disabled=False
 )
 w_quick = widgets.Checkbox(
@@ -291,18 +291,18 @@ w_significance = widgets.BoundedFloatText(
 )
 w_maskchange = widgets.Checkbox(
     value=False,
-    description='NC mask',
+    description='NCMask',
     disabled=False
 )
 w_maskwater = widgets.Checkbox(
     value=True,
-    description='Water mask',
+    description='WaterMask',
     disabled=False
 )
 w_S2 = widgets.Checkbox(
     layout = widgets.Layout(width='200px'),
     value=False,
-    description='Show S2',
+    description='ShowS2',
     disabled=False
 )
 w_opacity = widgets.BoundedFloatText(
@@ -324,7 +324,7 @@ w_reset = widgets.Button(description='Clear',disabled=False)
 w_goto = widgets.Button(description='GoTo',disabled=False)
 w_export_ass = widgets.Button(description='ExportToAssets',disabled=True)
 w_export_drv = widgets.Button(description='ExportToDrive',disabled=True)
-w_plot = widgets.Button(description='PlotFromAsset',disabled=False)
+w_plot = widgets.Button(description='PlotAsset',disabled=False)
 
 w_masks = widgets.VBox([w_maskchange,w_maskwater,w_quick])
 w_dates = widgets.VBox([w_startdate,w_enddate])
