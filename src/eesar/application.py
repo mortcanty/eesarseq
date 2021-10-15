@@ -620,6 +620,7 @@ def on_review_button_clicked(b):
             palette = jet
             w_out.clear_output()
             print('Series length: %i images, reviewing (please wait for raster overlay) ...'%(count+1))
+            mn = 0
             if w_changemap.value=='First':
                 mp = smap
                 mx = count
@@ -643,14 +644,14 @@ def on_review_button_clicked(b):
                 print('red = positive definite, cyan = negative definite, yellow = indefinite')     
                 mp = bmap.select(sel)
                 palette = rcy
-                mx = 3     
+                mx = 3           
             if len(m.layers)>3:
                 m.remove_layer(m.layers[3])
             if w_maskwater.value==True:
                 mp = mp.updateMask(watermask)
             if w_maskchange.value==True:    
                 mp = mp.updateMask(mp.gt(0))    
-            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=0, max=mx, opacity=w_opacity.value, palette=palette))))
+            m.add_layer(TileLayer(url=GetTileLayerUrl(mp.visualize(min=mn, max=mx, opacity=w_opacity.value, palette=palette))))
             w_collect.disabled = False
         except Exception as e:
             print('Error: %s'%e)
@@ -668,6 +669,7 @@ def on_export_ass_button_clicked(b):
         cmaps = ee.Image.cat(cmap,smap,fmap,bmap).rename(['cmap','smap','fmap']+timestamplist1[1:])  
         assexport = ee.batch.Export.image.toAsset(cmaps.byte().clip(poly),
                                     description='assetExportTask', 
+                                    pyramidingPolicy={".default": 'sample'},
                                     assetId=w_exportassetsname.value,scale=10,maxPixels=1e9)      
         assexport.start()
         with w_out: 
