@@ -269,6 +269,7 @@ w_stride = widgets.BoundedIntText(
     value=1,
     min=1,
     description='Stride:',
+    layout = widgets.Layout(width='100px'),
     disabled=False
 )
 w_median = widgets.Checkbox(
