@@ -43,9 +43,11 @@ def log_det(im_list, j):
     return ee.Image(det(im)).log()
 
 def pval(im_list, j, m=4.4):
-    """Calculates -2logRj for im_list and returns P value and -2logRj."""
+    """Calculates -2logRj for im_list and returns P value and -2mlogRj."""
     im_list = ee.List(im_list)
     j = ee.Number(j)
+    
+
     m2logRj = (log_det_sum(im_list, j.subtract(1))
                .multiply(j.subtract(1))
                .add(log_det(im_list, j))
@@ -54,10 +56,18 @@ def pval(im_list, j, m=4.4):
                .multiply(j.subtract(1).log()))
                .subtract(log_det_sum(im_list,j).multiply(j))
                .multiply(-2).multiply(m))
-    pv = ee.Image.constant(1).subtract(chi2cdf(m2logRj, 2))
+    
+    # correction to simple Wilks approximation
+    # pv = ee.Image.constant(1).subtract(chi2cdf(m2logRj, 2))    
+    one= ee.Number(1)
+    rhoj = one.subtract(one.add(one.divide(j.multiply(j.subtract(one)))).divide(6).divide(m))
+    omega2j = one.subtract(one.divide(rhoj)).pow(2.0).divide(-2)    
+    rhojm2logRj = m2logRj.multiply(rhoj)
+    pv = ee.Image.constant(1).subtract(chi2cdf(rhojm2logRj,2).add(chi2cdf(rhojm2logRj,6).multiply(omega2j)).subtract(chi2cdf(rhojm2logRj,2).multiply(omega2j)))   
+
     return (pv, m2logRj)
 
-def p_values(im_list):
+def p_values(im_list,m=4.4):
     """Pre-calculates the P-value array for a list of images."""
     im_list = ee.List(im_list)
     k = im_list.length()
@@ -80,7 +90,16 @@ def p_values(im_list):
 
         # Calculate m2logQl from collection of m2logRj images.
         m2logQl = ee.ImageCollection(pv_m2logRj.aggregate_array('m2logRj')).sum()
-        pvQl = ee.Image.constant(1).subtract(chi2cdf(m2logQl, ell.subtract(1).multiply(2)))
+
+        # correction to simple Wilks approximation
+        # pvQl = ee.Image.constant(1).subtract(chi2cdf(m2logQl, ell.subtract(1).multiply(2)))        
+        one = ee.Number(1)
+        f = ell.subtract(1).multiply(2)
+        rho = one.subtract(ell.divide(m).subtract(one.divide(ell.multiply(m))).divide(f).divide(3))
+        omega2 = f.multiply(one.subtract(one.divide(rho)).pow(2)).divide(-4)
+        rhom2logQl = m2logQl.multiply(rho)   
+        pvQl = ee.Image.constant(1).subtract(chi2cdf(rhom2logQl,f).add(chi2cdf(rhom2logQl,f.add(4)).multiply(omega2)).subtract(chi2cdf(rhom2logQl,f).multiply(omega2)))                     
+        
         pvs = ee.List(pv_m2logRj.aggregate_array('pv')).add(pvQl)
         return pvs
 
